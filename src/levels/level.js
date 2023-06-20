@@ -83,10 +83,12 @@ export class Level extends Phaser.Scene {
         this.#camera.startFollow(this.#player);
     }
 
+    /*
+     * Creates actors from the given Tiled Map Object layer. 
+     */
     createActors(layer, factory, player, callback, context = this) {
-        const actors = [];
         const defs = this.#map.getObjectLayer(layer)?.objects;
-        if (!defs) return null;
+        if (!defs) return;
 
         for (const def of defs) {
             const actor = factory.create(def.type.toLowerCase(), this, calcRect(def));
@@ -97,17 +99,18 @@ export class Level extends Phaser.Scene {
                     actor[prop.name] = prop.value;
                 }
             }
-
-            actors.push(actor);
-            this.addActor(actor);
+            this.addActor(actor, {player, callback, context});
         }
-        this.physics.add.overlap(player, actors, callback, null, context);
     }
 
-    addActor(actor) {
+    addActor(actor, collider=null) {
         if (actor) {
             this.#actors.push(actor);
             actor.setColliders(this.#layers);
+            if (collider) {
+                const {player, callback, context} = collider;
+                this.physics.add.overlap(player, actor, callback, null, context);
+            }
         }
     }
 
